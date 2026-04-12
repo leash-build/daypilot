@@ -8,9 +8,7 @@ import { DriveSection } from '@/components/drive-section'
 import { QuickSend } from '@/components/quick-send'
 import { ConnectBanner } from '@/components/connect-banner'
 
-const integrations = new LeashIntegrations({
-  apiKey: process.env.NEXT_PUBLIC_LEASH_API_KEY || 'lsk_live_65a35fc61b294e4c78bef319e4f9b21a17e7e4a5b7742155',
-})
+const integrations = new LeashIntegrations()
 
 type ConnectionMap = Record<string, boolean>
 
