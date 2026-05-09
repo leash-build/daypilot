@@ -14,9 +14,9 @@ export function RecentPlansSidebar() {
     fetch("/api/plans/recent")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch")
-        return res.json() as Promise<SavedPlan[]>
+        return res.json() as Promise<{ plans: SavedPlan[] }>
       })
-      .then(setPlans)
+      .then((data) => setPlans(data.plans ?? []))
       .catch(() => setError(true))
   }, [])
 
