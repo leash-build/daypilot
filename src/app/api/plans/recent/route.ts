@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server'
-import { getLeashUser } from '@leash/sdk/server'
+import { getLeashUser, isAuthenticated } from '@leash/sdk/server'
 import { recentPlans } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
-  const user = getLeashUser(req)
-  if (!user) {
+  if (!isAuthenticated(req)) {
     return Response.json({ error: 'unauthorized' }, { status: 401 })
   }
+  const user = getLeashUser(req)
   try {
     const plans = await recentPlans(user.id, 7)
     return Response.json({ plans })
