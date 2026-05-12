@@ -150,8 +150,16 @@ export default function HomePage() {
     }
   }
 
+  // The setState-in-effect rule fires here because `fetch*` calls setState
+  // synchronously to flip into the 'loading' status. That's intentional — the
+  // effect is the trigger for the initial network load, not a side-effect
+  // sync. The fetched-then-set pattern is what Next 16 docs call "an effect
+  // that subscribes to an external system." Disabling locally with rationale
+  // is preferable to restructuring around an event boundary that doesn't
+  // exist (initial page load has no user gesture to hang state off of).
   useEffect(() => {
     if (isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchConnections()
     }
   }, [isAuthenticated])
@@ -162,6 +170,7 @@ export default function HomePage() {
       connections.missing.length === 0 &&
       today.status === 'idle'
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchToday()
     }
   }, [connections, today.status])
