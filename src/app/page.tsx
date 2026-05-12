@@ -63,19 +63,28 @@ function SkeletonPage() {
 function SignInPrompt() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 bg-zinc-50 dark:bg-zinc-950">
-      <div className="flex flex-col items-center gap-6 text-center max-w-sm">
+      <div className="flex flex-col items-center gap-6 text-center max-w-md">
         <h1 className="text-2xl font-semibold tracking-tight">Sign in to Daypilot</h1>
-        <p className="text-sm text-muted-foreground">
-          Daypilot runs on Leash. Visit your Leash dashboard to sign in and launch this app.
-        </p>
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>Daypilot signs you in through your Leash dashboard.</p>
+          <p>
+            Open your daypilot app page in the dashboard and click{' '}
+            <span className="font-medium text-foreground">Open in local dev</span>.
+            You&apos;ll be redirected back here, signed in.
+          </p>
+        </div>
         <a
-          href="https://leash.build/dashboard"
+          href="https://leash.build/dashboard/apps"
           target="_blank"
           rel="noopener noreferrer"
           className={buttonVariants({ size: 'lg' })}
         >
-          Go to Leash Dashboard
+          Open Leash Dashboard
         </a>
+        <p className="text-xs text-muted-foreground/70">
+          Production users on <code>{'*.un.leash.build'}</code> sign in automatically — this
+          screen only appears in local development.
+        </p>
       </div>
     </div>
   )
@@ -141,8 +150,16 @@ export default function HomePage() {
     }
   }
 
+  // The setState-in-effect rule fires here because `fetch*` calls setState
+  // synchronously to flip into the 'loading' status. That's intentional — the
+  // effect is the trigger for the initial network load, not a side-effect
+  // sync. The fetched-then-set pattern is what Next 16 docs call "an effect
+  // that subscribes to an external system." Disabling locally with rationale
+  // is preferable to restructuring around an event boundary that doesn't
+  // exist (initial page load has no user gesture to hang state off of).
   useEffect(() => {
     if (isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchConnections()
     }
   }, [isAuthenticated])
@@ -153,6 +170,7 @@ export default function HomePage() {
       connections.missing.length === 0 &&
       today.status === 'idle'
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchToday()
     }
   }, [connections, today.status])
