@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Real env files — never commit secrets.
 .env*
+.env
+.env.local
+.env.*.local
+# .env.example IS committed — it's the contract; values live in the dashboard.
+!.env.example
 
 # vercel
 .vercel
@@ -40,3 +45,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# Leash CLI cache
+.leash/cache/
