@@ -9,6 +9,8 @@ import type { Plan } from '@/lib/db'
 import { PlanSection } from '@/components/plan-section'
 import { EventsSection } from '@/components/events-section'
 import { TriageSection } from '@/components/triage-section'
+import { IssuesSection } from '@/components/issues-section'
+import type { IssuesState } from '@/components/issues-section'
 import { RecentPlansSidebar } from '@/components/recent-plans-sidebar'
 import { ConnectPrompt } from '@/components/connect-prompt'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -22,6 +24,7 @@ const REQUIRED_PROVIDERS: Provider[] = ['gmail', 'google_calendar']
 type TodayData = {
   plan: Plan
   events: unknown[]
+  linear: IssuesState
 }
 
 type TodayState =
@@ -141,7 +144,11 @@ export default function HomePage() {
         return
       }
       const body = await res.json()
-      setToday({ status: 'ok', data: { plan: body.plan, events: body.events ?? [] } })
+      const linear: IssuesState = body.linear ?? { status: 'not_connected' }
+      setToday({
+        status: 'ok',
+        data: { plan: body.plan, events: body.events ?? [], linear },
+      })
     } catch (err) {
       setToday({
         status: 'error',
@@ -223,7 +230,7 @@ export default function HomePage() {
     )
   }
 
-  const { plan, events } = today.data
+  const { plan, events, linear } = today.data
   const triage = plan?.triage ?? []
   const todayDate = format(new Date(), 'EEEE, MMMM d')
 
@@ -240,6 +247,7 @@ export default function HomePage() {
           <main className="flex flex-col gap-6">
             <PlanSection plan={plan ?? null} />
             <EventsSection events={events} />
+            <IssuesSection state={linear} />
             <TriageSection triage={triage} />
           </main>
           <aside>

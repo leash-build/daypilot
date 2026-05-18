@@ -38,8 +38,13 @@ export async function savePlan(input: {
   userId: string
   events: unknown
   messages: unknown
+  issues: unknown
   plan: Plan
 }): Promise<string> {
+  // `issues` is intentionally not persisted as a separate column — keeping the
+  // schema stable across the Linear addition. The full plan output already
+  // captures whatever Claude surfaced from the issues input.
+  void input.issues
   const { rows } = await db().query(
     `INSERT INTO plans (user_id, events, messages, plan) VALUES ($1, $2, $3, $4) RETURNING id`,
     [

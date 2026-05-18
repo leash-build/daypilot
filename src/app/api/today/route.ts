@@ -12,10 +12,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { events, messages } = await fetchTodayContext(req)
-    const plan = await generatePlan({ events, messages })
-    const planId = await savePlan({ userId: user.id, events, messages, plan })
-    return Response.json({ planId, events, messages, plan })
+    const { events, messages, linear } = await fetchTodayContext(req)
+    const issuesForPrompt = linear.status === 'ok' ? linear.issues : []
+    const plan = await generatePlan({ events, messages, issues: issuesForPrompt })
+    const planId = await savePlan({
+      userId: user.id,
+      events,
+      messages,
+      issues: issuesForPrompt,
+      plan,
+    })
+    return Response.json({ planId, events, messages, linear, plan })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'internal error'
     return Response.json({ error: message }, { status: 500 })

@@ -2,7 +2,7 @@
 
 > The Leash example app — your day, planned, by Claude.
 
-Daypilot pulls today's calendar events and the last 24 hours of email through `@leash/sdk`, hands them to Claude, and renders a prioritized day plan, your raw events, and a triage queue of emails that need a response today. Every plan is saved to Postgres; the sidebar shows the last seven.
+Daypilot pulls today's calendar events, the last 24 hours of email, and your in-progress Linear issues through `@leash/sdk`, hands them to Claude, and renders a prioritized day plan, your raw events, a triage queue of emails that need a response today, and the issues currently on your plate. Every plan is saved to Postgres; the sidebar shows the last seven.
 
 It's also the canonical example for how to build on Leash.
 
@@ -22,9 +22,14 @@ docker run -d --name daypilot-pg -p 5432:5432 -e POSTGRES_PASSWORD=local postgre
 docker exec daypilot-pg psql -U postgres -c "CREATE DATABASE daypilot"
 docker exec -i daypilot-pg psql -U postgres -d daypilot < supabase/schema.sql
 
-# 3. Sign in to Leash + connect Gmail and Calendar OAuth
+# 3. Sign in to Leash + connect Gmail, Calendar, and Linear
 leash login
-# Visit https://leash.build/dashboard/connections and grant Gmail + Calendar
+# Visit https://leash.build/dashboard/connections and grant:
+#   - Gmail (OAuth)
+#   - Google Calendar (OAuth)
+#   - Linear (paste a personal access token from https://linear.app/settings/account/security)
+# Linear is optional — the app works without it, and will show a "Connect Linear"
+# CTA in the issues section until you do.
 
 # 4. Bind the local checkout to a Leash app
 leash init --name daypilot
@@ -46,7 +51,11 @@ Open `http://localhost:3000`, you'll sign in with the Leash auth that's already 
 
 ## How the SDK is used
 
-`src/lib/integrations.ts` builds an authenticated server-side client from the incoming request and fetches today's primary-calendar events plus the last 24h of Gmail in parallel. For each Gmail message it fans out to `getMessage(id, 'metadata')` so Claude has real subject + sender + snippet to reason over.
+`src/lib/integrations.ts` builds an authenticated server-side client from the incoming request and fetches three sources in parallel:
+
+- **Google Calendar** — today's primary-calendar events via `integrations.calendar.listEvents(...)`.
+- **Gmail** — the last 24h of messages via `integrations.gmail.listMessages(...)`, then fanned out to `getMessage(id, 'metadata')` so Claude has real subject + sender + snippet to reason over.
+- **Linear** — in-progress issues via `leash.integrations.linear.listIssues({ stateType: 'started' })`, wrapped in try/catch so an un-connected Linear surfaces a "Connect Linear" CTA instead of failing the request. This is the canonical shape for any non-Google integration in the SDK: a typed namespace under `leash.integrations.<provider>` with a single auth path through the Leash platform.
 
 `src/app/api/today/route.ts` is the orchestrator — identifies the user from the `leash-auth` cookie, calls the integrations helper, hands the result to Claude (`src/lib/prompt.ts`), persists the plan to Postgres, and returns the bundle.
 
